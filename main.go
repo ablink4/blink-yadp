@@ -23,13 +23,13 @@ func main() {
 
 	rand.Seed(int64(time.Now().UnixNano()))
 
-	const workers = 4
+	const workers = 2
 
 	for w := 0; w < workers; w++ {
 		go func() {
 			// use a unique conn per goroutine to improve performance
 			conn, err := clickhouse.Open(&clickhouse.Options{
-				Addr: []string{"localhost:9000"},
+				Addr: []string{"192.168.24.128:9000"},
 				Auth: clickhouse.Auth{
 					Database: "default",
 					Username: "default",
