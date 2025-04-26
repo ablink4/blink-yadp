@@ -71,6 +71,7 @@ func main() {
 	select {} // let the goroutines run forever
 }
 
+// insertBatch inserts a batch of sensor data into the database
 func insertBatch(conn clickhouse.Conn, ctx context.Context) {
 	batch, err := conn.PrepareBatch(ctx, "INSERT INTO sensor_data")
 	if err != nil {
