@@ -55,7 +55,7 @@ func main() {
 			value Float32,
 			metadata String
 			) ENGINE = MergeTree()
-			ORDER BY (timestamp)
+			ORDER BY (timestamp, value)
 			`)
 			if err != nil {
 				panic(err)
