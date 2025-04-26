@@ -1,4 +1,0 @@
-id,timestamp,user_id,event_type,metadata
-550e8400-e29b-41d4-a716-446655440000,2025-04-17T14:00:00Z,101,click,"{""page"":""home""}"
-550e8400-e29b-41d4-a716-446655440001,2025-04-17T14:00:05Z,102,view,"{""page"":""products""}"
-550e8400-e29b-41d4-a716-446655440002,2025-04-17T14:00:10Z,101,click,"{""page"":""checkout""}"
