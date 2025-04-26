@@ -1,0 +1,5 @@
+# Yet Another Data Pipeline
+
+This is a fun side project for me to tinker with, and an experience to use Go and ClickHouse DB, neither of which I have used before.  This is "yet another" data ingestion pipeline.  In this project I'm exploring just how much data throughput I can achieve.  My dev/test environment is a modest developer's laptop with virtual machines, so I'm sure the numbers it achieves in that environment won't be mind boggling, but I'm hoping for some pretty impressive throughput anyway.  While the initial commits will be the data pipeline, I also want to put in a visualization aspect as well (not well defined at this point, just a nebulous concept floating around in my head). 
+
+Disclaimer: this is a developer's side project for fun, please don't use this in production.  You can if you really want to (just with no warranty or guarantee that it works), but I really wouldn't recommend that.
