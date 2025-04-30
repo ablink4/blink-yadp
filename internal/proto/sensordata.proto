@@ -15,6 +15,12 @@ message SensorData {
     string metadata = 5;
 }
 
+// A batch of sensor readings
+message SensorDataBatch {
+    repeated SensorData items = 1;
+}
+
+// Acknowledgement from the server to the client
 message Ack {
     string message = 1;
 }
@@ -22,4 +28,5 @@ message Ack {
 // This service is implemented by the ingestor and called by the sensor(s)
 service SensorIngestor {
     rpc SendSensorData (SensorData) returns (Ack);
+    rpc SendSensorBatch (SensorDataBatch) returns (Ack);
 }

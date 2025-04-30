@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SensorIngestor_SendSensorData_FullMethodName = "/sensordata.SensorIngestor/SendSensorData"
+	SensorIngestor_SendSensorData_FullMethodName  = "/sensordata.SensorIngestor/SendSensorData"
+	SensorIngestor_SendSensorBatch_FullMethodName = "/sensordata.SensorIngestor/SendSensorBatch"
 )
 
 // SensorIngestorClient is the client API for SensorIngestor service.
@@ -29,6 +30,7 @@ const (
 // This service is implemented by the ingestor and called by the sensor(s)
 type SensorIngestorClient interface {
 	SendSensorData(ctx context.Context, in *SensorData, opts ...grpc.CallOption) (*Ack, error)
+	SendSensorBatch(ctx context.Context, in *SensorDataBatch, opts ...grpc.CallOption) (*Ack, error)
 }
 
 type sensorIngestorClient struct {
@@ -49,6 +51,16 @@ func (c *sensorIngestorClient) SendSensorData(ctx context.Context, in *SensorDat
 	return out, nil
 }
 
+func (c *sensorIngestorClient) SendSensorBatch(ctx context.Context, in *SensorDataBatch, opts ...grpc.CallOption) (*Ack, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Ack)
+	err := c.cc.Invoke(ctx, SensorIngestor_SendSensorBatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SensorIngestorServer is the server API for SensorIngestor service.
 // All implementations must embed UnimplementedSensorIngestorServer
 // for forward compatibility.
@@ -56,6 +68,7 @@ func (c *sensorIngestorClient) SendSensorData(ctx context.Context, in *SensorDat
 // This service is implemented by the ingestor and called by the sensor(s)
 type SensorIngestorServer interface {
 	SendSensorData(context.Context, *SensorData) (*Ack, error)
+	SendSensorBatch(context.Context, *SensorDataBatch) (*Ack, error)
 	mustEmbedUnimplementedSensorIngestorServer()
 }
 
@@ -68,6 +81,9 @@ type UnimplementedSensorIngestorServer struct{}
 
 func (UnimplementedSensorIngestorServer) SendSensorData(context.Context, *SensorData) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendSensorData not implemented")
+}
+func (UnimplementedSensorIngestorServer) SendSensorBatch(context.Context, *SensorDataBatch) (*Ack, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendSensorBatch not implemented")
 }
 func (UnimplementedSensorIngestorServer) mustEmbedUnimplementedSensorIngestorServer() {}
 func (UnimplementedSensorIngestorServer) testEmbeddedByValue()                        {}
@@ -108,6 +124,24 @@ func _SensorIngestor_SendSensorData_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SensorIngestor_SendSensorBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SensorDataBatch)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SensorIngestorServer).SendSensorBatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SensorIngestor_SendSensorBatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SensorIngestorServer).SendSensorBatch(ctx, req.(*SensorDataBatch))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SensorIngestor_ServiceDesc is the grpc.ServiceDesc for SensorIngestor service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -118,6 +152,10 @@ var SensorIngestor_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendSensorData",
 			Handler:    _SensorIngestor_SendSensorData_Handler,
+		},
+		{
+			MethodName: "SendSensorBatch",
+			Handler:    _SensorIngestor_SendSensorBatch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
