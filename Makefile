@@ -24,8 +24,8 @@ ingestor:
 
 proto:
 	@echo "Generating protobuf Go code..."
-	@protoc --go_out=$(PROTO_DIR) --go_opt=paths=source_relative \
-			--go-grpc_out=$(PROTO_DIR) --go-grpc_opt=paths=source_relative \
+	@protoc --go_out=. --go_opt=paths=source_relative \
+			--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 			$(PROTO_FILES)
 
 # build protobuf and binaries together

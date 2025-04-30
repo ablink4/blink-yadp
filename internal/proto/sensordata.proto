@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package sensordata;
 
-option go_package = "blink-yadp/internal/proto;sensordata";
+option go_package = "blink-yadp/internal/proto/sensordata;sensordata";
 
 import "google/protobuf/timestamp.proto";
 
@@ -13,4 +13,13 @@ message SensorData {
     uint32 sensor_id = 3;
     float value = 4;
     string metadata = 5;
+}
+
+message Ack {
+    string message = 1;
+}
+
+// This service is implemented by the ingestor and called by the sensor(s)
+service SensorIngestor {
+    rpc SendSensorData (SensorData) returns (Ack);
 }

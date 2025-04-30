@@ -4,43 +4,43 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"runtime"
+	"net"
 
 	"blink-yadp/internal/ingest"
-	"blink-yadp/internal/sensor"
+	sensordata "blink-yadp/internal/proto"
+
+	"google.golang.org/grpc"
 )
 
 func main() {
 	ctx := context.Background()
 
-	numWorkers := runtime.NumCPU() // one gorountine per core for performance
-	log.Printf("Starting with %d workers\n", numWorkers)
+	conn, err := ingest.NewClickHouseConn()
+	if err != nil {
+		log.Fatalf("Failed to connect: %v", err)
+	}
+	defer conn.Close()
 
-	for i := 0; i < numWorkers; i++ {
-		go func(workerID int) {
+	if err := conn.Ping(ctx); err != nil {
+		log.Fatalf("ClickHouse ping failed: %v", err)
+	}
+	fmt.Println("Connected to ClickHouse.")
 
-			conn, err := ingest.NewClickHouseConn()
-			if err != nil {
-				log.Fatalf("[Worker %d] failed to connect: %v", workerID, err)
-			}
-			defer conn.Close()
-
-			if err := conn.Ping(ctx); err != nil {
-				log.Fatalf("[Worker %d] ClickHouse ping failed: %v", workerID, err)
-			}
-			fmt.Println("Connected to ClickHouse.")
-
-			if err := ingest.EnsureTable(conn, ctx); err != nil {
-				log.Fatalf("[Worker %d] EnsureTable failed: %v", workerID, err)
-			}
-
-			log.Printf("[Worker %d] Ingestion started", workerID)
-			for {
-				// TODO: ingest data from remote sensors instead of just simulate it from the sensor module
-				ingest.InsertBatch(conn, ctx, 100000, sensor.GenerateSensorData)
-			}
-		}(i)
+	if err := ingest.EnsureTable(conn, ctx); err != nil {
+		log.Fatalf("EnsureTable failed: %v", err)
 	}
 
-	select {} // let the goroutines run forever
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+
+	sensordata.RegisterSensorIngestorServer(grpcServer, &ingest.Server{DB: conn})
+
+	fmt.Println("gRPC server listening on :50051")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
