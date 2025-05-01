@@ -38,25 +38,22 @@ func main() {
 			defer ticker.Stop()
 
 			// replace for/select with `for range ticker.C`
-			for {
-				select {
-				case <-ticker.C:
-					d := sensor.GenerateSensorData()
-					buffer = append(buffer, &sensordata.SensorData{
-						Id:        d.ID.String(),
-						Timestamp: timestamppb.New(d.Timestamp),
-						SensorId:  d.SensorId,
-						Value:     d.Value,
-						Metadata:  d.Metadata,
-					})
+			for range ticker.C {
+				d := sensor.GenerateSensorData()
+				buffer = append(buffer, &sensordata.SensorData{
+					Id:        d.ID.String(),
+					Timestamp: timestamppb.New(d.Timestamp),
+					SensorId:  d.SensorId,
+					Value:     d.Value,
+					Metadata:  d.Metadata,
+				})
 
-					if len(buffer) >= batchSize {
-						_, err := client.SendSensorBatch(ctx, &sensordata.SensorDataBatch{Items: buffer})
-						if err != nil {
-							log.Printf("[Worker %d] SendSensorBatch error: %v", workerID, err)
-						}
-						buffer = buffer[:0]
+				if len(buffer) >= batchSize {
+					_, err := client.SendSensorBatch(ctx, &sensordata.SensorDataBatch{Items: buffer})
+					if err != nil {
+						log.Printf("[Worker %d] SendSensorBatch error: %v", workerID, err)
 					}
+					buffer = buffer[:0]
 				}
 			}
 		}(i)
