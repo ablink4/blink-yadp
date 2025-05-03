@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SensorIngestor_SendSensorData_FullMethodName  = "/sensordata.SensorIngestor/SendSensorData"
-	SensorIngestor_SendSensorBatch_FullMethodName = "/sensordata.SensorIngestor/SendSensorBatch"
+	SensorIngestor_SendSensorData_FullMethodName   = "/sensordata.SensorIngestor/SendSensorData"
+	SensorIngestor_SendSensorBatch_FullMethodName  = "/sensordata.SensorIngestor/SendSensorBatch"
+	SensorIngestor_SendSensorStream_FullMethodName = "/sensordata.SensorIngestor/SendSensorStream"
 )
 
 // SensorIngestorClient is the client API for SensorIngestor service.
@@ -31,6 +32,7 @@ const (
 type SensorIngestorClient interface {
 	SendSensorData(ctx context.Context, in *SensorData, opts ...grpc.CallOption) (*Ack, error)
 	SendSensorBatch(ctx context.Context, in *SensorDataBatch, opts ...grpc.CallOption) (*Ack, error)
+	SendSensorStream(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SensorData, Ack], error)
 }
 
 type sensorIngestorClient struct {
@@ -61,6 +63,19 @@ func (c *sensorIngestorClient) SendSensorBatch(ctx context.Context, in *SensorDa
 	return out, nil
 }
 
+func (c *sensorIngestorClient) SendSensorStream(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SensorData, Ack], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SensorIngestor_ServiceDesc.Streams[0], SensorIngestor_SendSensorStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SensorData, Ack]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SensorIngestor_SendSensorStreamClient = grpc.ClientStreamingClient[SensorData, Ack]
+
 // SensorIngestorServer is the server API for SensorIngestor service.
 // All implementations must embed UnimplementedSensorIngestorServer
 // for forward compatibility.
@@ -69,6 +84,7 @@ func (c *sensorIngestorClient) SendSensorBatch(ctx context.Context, in *SensorDa
 type SensorIngestorServer interface {
 	SendSensorData(context.Context, *SensorData) (*Ack, error)
 	SendSensorBatch(context.Context, *SensorDataBatch) (*Ack, error)
+	SendSensorStream(grpc.ClientStreamingServer[SensorData, Ack]) error
 	mustEmbedUnimplementedSensorIngestorServer()
 }
 
@@ -84,6 +100,9 @@ func (UnimplementedSensorIngestorServer) SendSensorData(context.Context, *Sensor
 }
 func (UnimplementedSensorIngestorServer) SendSensorBatch(context.Context, *SensorDataBatch) (*Ack, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendSensorBatch not implemented")
+}
+func (UnimplementedSensorIngestorServer) SendSensorStream(grpc.ClientStreamingServer[SensorData, Ack]) error {
+	return status.Errorf(codes.Unimplemented, "method SendSensorStream not implemented")
 }
 func (UnimplementedSensorIngestorServer) mustEmbedUnimplementedSensorIngestorServer() {}
 func (UnimplementedSensorIngestorServer) testEmbeddedByValue()                        {}
@@ -142,6 +161,13 @@ func _SensorIngestor_SendSensorBatch_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SensorIngestor_SendSensorStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SensorIngestorServer).SendSensorStream(&grpc.GenericServerStream[SensorData, Ack]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SensorIngestor_SendSensorStreamServer = grpc.ClientStreamingServer[SensorData, Ack]
+
 // SensorIngestor_ServiceDesc is the grpc.ServiceDesc for SensorIngestor service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -158,6 +184,12 @@ var SensorIngestor_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SensorIngestor_SendSensorBatch_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "SendSensorStream",
+			Handler:       _SensorIngestor_SendSensorStream_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "internal/proto/sensordata.proto",
 }

@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"context"
+	"io"
 	"log"
 
 	"blink-yadp/internal/data"
@@ -85,4 +86,82 @@ func (s *Server) SendSensorBatch(ctx context.Context, batchReq *sensordata.Senso
 	}
 
 	return &sensordata.Ack{Message: "OK"}, nil
+}
+
+func (s *Server) SendSensorStream(stream sensordata.SensorIngestor_SendSensorStreamServer) error {
+	ctx := stream.Context()
+
+	batch, err := s.DB.PrepareBatch(ctx, "INSERT INTO sensor_data")
+	if err != nil {
+		log.Printf("PrepareBatch error: %v", err)
+		return err
+	}
+
+	const batchSize = 10000
+	count := 0
+
+	for {
+		req, err := stream.Recv()
+
+		if err == io.EOF {
+			log.Println("Client closed stream, flushing remaining data.")
+
+			if count > 0 {
+				if err := batch.Send(); err != nil {
+					log.Printf("Final batch send error: %v", err)
+					return err
+				}
+			}
+
+			return stream.SendAndClose(&sensordata.Ack{Message: "OK"})
+		}
+
+		if err != nil {
+			log.Printf("Stream recv error: %v", err)
+			return err
+		}
+
+		id, err := uuid.Parse(req.Id)
+		if err != nil {
+			log.Printf("UUID parse error: %v", err)
+			continue
+		}
+
+		record := data.SensorData{
+			ID:        id,
+			Timestamp: req.Timestamp.AsTime(),
+			SensorId:  req.SensorId,
+			Value:     req.Value,
+			Metadata:  req.Metadata,
+		}
+
+		if err := batch.AppendStruct(&record); err != nil {
+			log.Printf("AppendStruct error: %v", err)
+			return err
+		}
+
+		count++
+
+		// flush batches periodically
+		if count >= batchSize {
+			if err := batch.Send(); err != nil {
+				log.Printf("Batch send error: %v", err)
+				return err
+			}
+
+			if err := batch.Send(); err != nil {
+				log.Printf("Batch send error: %v", err)
+				return err
+			}
+
+			// reset the batch
+			batch, err = s.DB.PrepareBatch(ctx, "INSERT INTO sensor_data")
+			if err != nil {
+				log.Printf("PrepareBatch error after send: %v", err)
+				return err
+			}
+
+			count = 0
+		}
+	}
 }

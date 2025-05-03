@@ -33,27 +33,28 @@ func main() {
 			client := sensordata.NewSensorIngestorClient(conn)
 			ctx := context.Background()
 
-			var buffer []*sensordata.SensorData
+			stream, err := client.SendSensorStream(ctx)
+			if err != nil {
+				log.Fatalf("[Worker %d] failed to open stream: %v", workerID, err)
+			}
+
 			ticker := time.NewTicker(10 * time.Microsecond)
 			defer ticker.Stop()
 
 			// replace for/select with `for range ticker.C`
 			for range ticker.C {
 				d := sensor.GenerateSensorData()
-				buffer = append(buffer, &sensordata.SensorData{
+				msg := &sensordata.SensorData{
 					Id:        d.ID.String(),
 					Timestamp: timestamppb.New(d.Timestamp),
 					SensorId:  d.SensorId,
 					Value:     d.Value,
 					Metadata:  d.Metadata,
-				})
+				}
 
-				if len(buffer) >= batchSize {
-					_, err := client.SendSensorBatch(ctx, &sensordata.SensorDataBatch{Items: buffer})
-					if err != nil {
-						log.Printf("[Worker %d] SendSensorBatch error: %v", workerID, err)
-					}
-					buffer = buffer[:0]
+				if err := stream.Send(msg); err != nil {
+					log.Printf("[Worker %d] stream send error %v", workerID, err)
+					return
 				}
 			}
 		}(i)
