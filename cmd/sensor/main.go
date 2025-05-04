@@ -41,7 +41,6 @@ func main() {
 			ticker := time.NewTicker(10 * time.Microsecond)
 			defer ticker.Stop()
 
-			// replace for/select with `for range ticker.C`
 			for range ticker.C {
 				d := sensor.GenerateSensorData()
 				msg := &sensordata.SensorData{
@@ -60,5 +59,5 @@ func main() {
 		}(i)
 	}
 
-	select {} // let the goroutines run forever
+	select {} // let the sensor send data forever
 }
