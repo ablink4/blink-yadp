@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"runtime"
 	"time"
@@ -19,6 +20,9 @@ const (
 )
 
 func main() {
+	sensorId := flag.Int("sensor-id", -1, "Optional sensor ID.  If not provided, will generate random sensor IDs.")
+	flag.Parse()
+
 	numWorkers := runtime.NumCPU()
 	log.Printf("Spawning %d sensor workers", numWorkers)
 
@@ -42,7 +46,7 @@ func main() {
 			defer ticker.Stop()
 
 			for range ticker.C {
-				d := sensor.GenerateSensorData()
+				d := sensor.GenerateSensorData(*sensorId)
 				msg := &sensordata.SensorData{
 					Id:        d.ID.String(),
 					Timestamp: timestamppb.New(d.Timestamp),
