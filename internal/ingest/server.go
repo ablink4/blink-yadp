@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"runtime"
 
 	"blink-yadp/internal/data"
 	sensordata "blink-yadp/internal/proto"
@@ -11,9 +12,42 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 )
 
+// InsertJob is used to separate and parallelize inserting to the database from receiving from the network
+type InsertJob struct {
+	Records []data.SensorData
+}
+
+// Server is the gRPC server
 type Server struct {
 	sensordata.UnimplementedSensorIngestorServer
 	DB clickhouse.Conn
+}
+
+// global channel to add jobs to insert into the database
+var insertJobs = make(chan InsertJob, 1000) // 1000 is queue size of jobs to insert
+
+func StartInsertWorkers(db clickhouse.Conn, numWorkers int) {
+	for i := 0; i < numWorkers; i++ {
+		go func(workerID int) {
+			for job := range insertJobs {
+				batch, err := db.PrepareBatch(context.Background(), "INSERT INTO sensor_data")
+				if err != nil {
+					log.Printf("[Worker %d] PrepareBatch error: %v", workerID, err)
+					continue
+				}
+
+				for _, record := range job.Records {
+					if err := batch.AppendStruct(&record); err != nil {
+						log.Printf("[Worker %d] AppendStruct error: %v", workerID, err)
+					}
+				}
+
+				if err := batch.Send(); err != nil {
+					log.Printf("[Worker %d] Batch send error: %v", workerID, err)
+				}
+			}
+		}(i)
+	}
 }
 
 func (s *Server) SendSensorData(ctx context.Context, req *sensordata.SensorData) (*sensordata.Ack, error) {
@@ -74,16 +108,11 @@ func (s *Server) SendSensorBatch(ctx context.Context, batchReq *sensordata.Senso
 }
 
 func (s *Server) SendSensorStream(stream sensordata.SensorIngestor_SendSensorStreamServer) error {
-	ctx := stream.Context()
-
-	batch, err := s.DB.PrepareBatch(ctx, "INSERT INTO sensor_data")
-	if err != nil {
-		log.Printf("PrepareBatch error: %v", err)
-		return err
-	}
+	numWorkers := runtime.NumCPU()
+	StartInsertWorkers(s.DB, numWorkers)
 
 	const batchSize = 10000
-	count := 0
+	var buffer []data.SensorData
 
 	for {
 		req, err := stream.Recv()
@@ -91,11 +120,8 @@ func (s *Server) SendSensorStream(stream sensordata.SensorIngestor_SendSensorStr
 		if err == io.EOF {
 			log.Println("Client closed stream, flushing remaining data.")
 
-			if count > 0 {
-				if err := batch.Send(); err != nil {
-					log.Printf("Final batch send error: %v", err)
-					return err
-				}
+			if len(buffer) > 0 {
+				insertJobs <- InsertJob{Records: buffer}
 			}
 
 			return stream.SendAndClose(&sensordata.Ack{Message: "OK"})
@@ -113,33 +139,11 @@ func (s *Server) SendSensorStream(stream sensordata.SensorIngestor_SendSensorStr
 			Metadata:  req.Metadata,
 		}
 
-		if err := batch.AppendStruct(&record); err != nil {
-			log.Printf("AppendStruct error: %v", err)
-			return err
-		}
+		buffer = append(buffer, record)
 
-		count++
-
-		// flush batches periodically
-		if count >= batchSize {
-			if err := batch.Send(); err != nil {
-				log.Printf("Batch send error: %v", err)
-				return err
-			}
-
-			if err := batch.Send(); err != nil {
-				log.Printf("Batch send error: %v", err)
-				return err
-			}
-
-			// reset the batch
-			batch, err = s.DB.PrepareBatch(ctx, "INSERT INTO sensor_data")
-			if err != nil {
-				log.Printf("PrepareBatch error after send: %v", err)
-				return err
-			}
-
-			count = 0
+		if len(buffer) >= batchSize {
+			insertJobs <- InsertJob{Records: buffer}
+			buffer = make([]data.SensorData, 0, batchSize)
 		}
 	}
 }
