@@ -9,7 +9,6 @@ import (
 	sensordata "blink-yadp/internal/proto"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/google/uuid"
 )
 
 type Server struct {
@@ -18,14 +17,7 @@ type Server struct {
 }
 
 func (s *Server) SendSensorData(ctx context.Context, req *sensordata.SensorData) (*sensordata.Ack, error) {
-	id, err := uuid.Parse(req.Id)
-	if err != nil {
-		log.Printf("UUID parse error: %v", err)
-		return nil, err
-	}
-
 	data := data.SensorData{
-		ID:        id,
 		Timestamp: req.Timestamp.AsTime(),
 		SensorId:  req.SensorId,
 		Value:     req.Value,
@@ -60,14 +52,7 @@ func (s *Server) SendSensorBatch(ctx context.Context, batchReq *sensordata.Senso
 	}
 
 	for _, req := range batchReq.Items {
-		id, err := uuid.Parse(req.Id)
-		if err != nil {
-			log.Printf("UUID parse error: %v", err)
-			return nil, err
-		}
-
 		record := data.SensorData{
-			ID:        id,
 			Timestamp: req.Timestamp.AsTime(),
 			SensorId:  req.SensorId,
 			Value:     req.Value,
@@ -121,14 +106,7 @@ func (s *Server) SendSensorStream(stream sensordata.SensorIngestor_SendSensorStr
 			return err
 		}
 
-		id, err := uuid.Parse(req.Id)
-		if err != nil {
-			log.Printf("UUID parse error: %v", err)
-			continue
-		}
-
 		record := data.SensorData{
-			ID:        id,
 			Timestamp: req.Timestamp.AsTime(),
 			SensorId:  req.SensorId,
 			Value:     req.Value,

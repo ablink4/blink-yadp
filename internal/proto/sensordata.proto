@@ -8,11 +8,10 @@ import "google/protobuf/timestamp.proto";
 
 // Data sample for a single sensor
 message SensorData {
-    string id = 1;
-    google.protobuf.Timestamp timestamp = 2;  // timestamp with sub-second precision
-    uint32 sensor_id = 3;
-    float value = 4;
-    string metadata = 5;
+    google.protobuf.Timestamp timestamp = 1;  // timestamp with sub-second precision
+    uint32 sensor_id = 2;
+    float value = 3;
+    string metadata = 4;
 }
 
 // A batch of sensor readings

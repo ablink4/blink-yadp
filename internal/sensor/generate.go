@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"blink-yadp/internal/data"
-
-	"github.com/google/uuid"
 )
 
 // GenerateSensorData generates a sample sensor data for ingestion
@@ -20,7 +18,6 @@ func GenerateSensorData(sensorId int) data.SensorData {
 	}
 
 	return data.SensorData{
-		ID:        uuid.New(),
 		Timestamp: time.Now(),
 		SensorId:  finalSensorId,
 		Value:     rand.Float32() * 10000,

@@ -48,7 +48,6 @@ func main() {
 			for range ticker.C {
 				d := sensor.GenerateSensorData(*sensorId)
 				msg := &sensordata.SensorData{
-					Id:        d.ID.String(),
 					Timestamp: timestamppb.New(d.Timestamp),
 					SensorId:  d.SensorId,
 					Value:     d.Value,

@@ -25,11 +25,10 @@ const (
 // Data sample for a single sensor
 type SensorData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // timestamp with sub-second precision
-	SensorId      uint32                 `protobuf:"varint,3,opt,name=sensor_id,json=sensorId,proto3" json:"sensor_id,omitempty"`
-	Value         float32                `protobuf:"fixed32,4,opt,name=value,proto3" json:"value,omitempty"`
-	Metadata      string                 `protobuf:"bytes,5,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // timestamp with sub-second precision
+	SensorId      uint32                 `protobuf:"varint,2,opt,name=sensor_id,json=sensorId,proto3" json:"sensor_id,omitempty"`
+	Value         float32                `protobuf:"fixed32,3,opt,name=value,proto3" json:"value,omitempty"`
+	Metadata      string                 `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,13 +61,6 @@ func (x *SensorData) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SensorData.ProtoReflect.Descriptor instead.
 func (*SensorData) Descriptor() ([]byte, []int) {
 	return file_internal_proto_sensordata_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *SensorData) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
 }
 
 func (x *SensorData) GetTimestamp() *timestamppb.Timestamp {
@@ -194,14 +186,13 @@ var File_internal_proto_sensordata_proto protoreflect.FileDescriptor
 const file_internal_proto_sensordata_proto_rawDesc = "" +
 	"\n" +
 	"\x1finternal/proto/sensordata.proto\x12\n" +
-	"sensordata\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa5\x01\n" +
+	"sensordata\x1a\x1fgoogle/protobuf/timestamp.proto\"\x95\x01\n" +
 	"\n" +
-	"SensorData\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x128\n" +
-	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x1b\n" +
-	"\tsensor_id\x18\x03 \x01(\rR\bsensorId\x12\x14\n" +
-	"\x05value\x18\x04 \x01(\x02R\x05value\x12\x1a\n" +
-	"\bmetadata\x18\x05 \x01(\tR\bmetadata\"?\n" +
+	"SensorData\x128\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x1b\n" +
+	"\tsensor_id\x18\x02 \x01(\rR\bsensorId\x12\x14\n" +
+	"\x05value\x18\x03 \x01(\x02R\x05value\x12\x1a\n" +
+	"\bmetadata\x18\x04 \x01(\tR\bmetadata\"?\n" +
 	"\x0fSensorDataBatch\x12,\n" +
 	"\x05items\x18\x01 \x03(\v2\x16.sensordata.SensorDataR\x05items\"\x1f\n" +
 	"\x03Ack\x12\x18\n" +

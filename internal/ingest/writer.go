@@ -21,7 +21,6 @@ func NewClickHouseConn() (clickhouse.Conn, error) {
 func EnsureTable(conn clickhouse.Conn, ctx context.Context) error {
 	return conn.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS sensor_data (
-		id UUID,
 		timestamp DateTime64,
 		sensor_id UInt32,
 		value Float32,
