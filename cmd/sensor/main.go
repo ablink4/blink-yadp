@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"runtime"
-	"time"
 
 	sensordata "blink-yadp/internal/proto"
 	"blink-yadp/internal/sensor"
@@ -42,19 +41,22 @@ func main() {
 				log.Fatalf("[Worker %d] failed to open stream: %v", workerID, err)
 			}
 
-			ticker := time.NewTicker(10 * time.Microsecond)
-			defer ticker.Stop()
+			for {
+				var batch sensordata.SensorDataBatch
 
-			for range ticker.C {
-				d := sensor.GenerateSensorData(*sensorId)
-				msg := &sensordata.SensorData{
-					Timestamp: timestamppb.New(d.Timestamp),
-					SensorId:  d.SensorId,
-					Value:     d.Value,
-					Metadata:  d.Metadata,
+				for range batchSize {
+					d := sensor.GenerateSensorData(*sensorId)
+					msg := &sensordata.SensorData{
+						Timestamp: timestamppb.New(d.Timestamp),
+						SensorId:  d.SensorId,
+						Value:     d.Value,
+						Metadata:  d.Metadata,
+					}
+
+					batch.Items = append(batch.Items, msg)
 				}
 
-				if err := stream.Send(msg); err != nil {
+				if err := stream.Send(&batch); err != nil {
 					log.Printf("[Worker %d] stream send error %v", workerID, err)
 					return
 				}

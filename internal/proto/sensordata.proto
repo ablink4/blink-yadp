@@ -28,5 +28,5 @@ message Ack {
 service SensorIngestor {
     rpc SendSensorData (SensorData) returns (Ack);
     rpc SendSensorBatch (SensorDataBatch) returns (Ack);
-    rpc SendSensorStream (stream SensorData) returns (Ack);
+    rpc SendSensorStream (stream SensorDataBatch) returns (Ack);
 }

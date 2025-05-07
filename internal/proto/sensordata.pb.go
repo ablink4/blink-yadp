@@ -196,11 +196,11 @@ const file_internal_proto_sensordata_proto_rawDesc = "" +
 	"\x0fSensorDataBatch\x12,\n" +
 	"\x05items\x18\x01 \x03(\v2\x16.sensordata.SensorDataR\x05items\"\x1f\n" +
 	"\x03Ack\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2\xcb\x01\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage2\xd0\x01\n" +
 	"\x0eSensorIngestor\x129\n" +
 	"\x0eSendSensorData\x12\x16.sensordata.SensorData\x1a\x0f.sensordata.Ack\x12?\n" +
-	"\x0fSendSensorBatch\x12\x1b.sensordata.SensorDataBatch\x1a\x0f.sensordata.Ack\x12=\n" +
-	"\x10SendSensorStream\x12\x16.sensordata.SensorData\x1a\x0f.sensordata.Ack(\x01B1Z/blink-yadp/internal/proto/sensordata;sensordatab\x06proto3"
+	"\x0fSendSensorBatch\x12\x1b.sensordata.SensorDataBatch\x1a\x0f.sensordata.Ack\x12B\n" +
+	"\x10SendSensorStream\x12\x1b.sensordata.SensorDataBatch\x1a\x0f.sensordata.Ack(\x01B1Z/blink-yadp/internal/proto/sensordata;sensordatab\x06proto3"
 
 var (
 	file_internal_proto_sensordata_proto_rawDescOnce sync.Once
@@ -226,7 +226,7 @@ var file_internal_proto_sensordata_proto_depIdxs = []int32{
 	0, // 1: sensordata.SensorDataBatch.items:type_name -> sensordata.SensorData
 	0, // 2: sensordata.SensorIngestor.SendSensorData:input_type -> sensordata.SensorData
 	1, // 3: sensordata.SensorIngestor.SendSensorBatch:input_type -> sensordata.SensorDataBatch
-	0, // 4: sensordata.SensorIngestor.SendSensorStream:input_type -> sensordata.SensorData
+	1, // 4: sensordata.SensorIngestor.SendSensorStream:input_type -> sensordata.SensorDataBatch
 	2, // 5: sensordata.SensorIngestor.SendSensorData:output_type -> sensordata.Ack
 	2, // 6: sensordata.SensorIngestor.SendSensorBatch:output_type -> sensordata.Ack
 	2, // 7: sensordata.SensorIngestor.SendSensorStream:output_type -> sensordata.Ack

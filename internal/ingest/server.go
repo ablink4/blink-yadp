@@ -12,15 +12,15 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 )
 
-// InsertJob is used to separate and parallelize inserting to the database from receiving from the network
-type InsertJob struct {
-	Records []data.SensorData
-}
-
 // Server is the gRPC server
 type Server struct {
 	sensordata.UnimplementedSensorIngestorServer
 	DB clickhouse.Conn
+}
+
+// InsertJob is used to separate and parallelize inserting to the database from receiving from the network
+type InsertJob struct {
+	Records []data.SensorData
 }
 
 // global channel to add jobs to insert into the database
@@ -132,18 +132,20 @@ func (s *Server) SendSensorStream(stream sensordata.SensorIngestor_SendSensorStr
 			return err
 		}
 
-		record := data.SensorData{
-			Timestamp: req.Timestamp.AsTime(),
-			SensorId:  req.SensorId,
-			Value:     req.Value,
-			Metadata:  req.Metadata,
-		}
+		for _, item := range req.Items {
+			record := data.SensorData{
+				Timestamp: item.Timestamp.AsTime(),
+				SensorId:  item.SensorId,
+				Value:     item.Value,
+				Metadata:  item.Metadata,
+			}
 
-		buffer = append(buffer, record)
+			buffer = append(buffer, record)
 
-		if len(buffer) >= batchSize {
-			insertJobs <- InsertJob{Records: buffer}
-			buffer = make([]data.SensorData, 0, batchSize)
+			if len(buffer) >= batchSize {
+				insertJobs <- InsertJob{Records: buffer}
+				buffer = make([]data.SensorData, 0, batchSize)
+			}
 		}
 	}
 }
