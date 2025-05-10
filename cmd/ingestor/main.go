@@ -5,12 +5,21 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
+	_ "net/http/pprof"
 
 	"blink-yadp/internal/ingest"
 	sensordata "blink-yadp/internal/proto"
 
 	"google.golang.org/grpc"
 )
+
+// endpoint for pprof
+func init() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+}
 
 func main() {
 	ctx := context.Background()
