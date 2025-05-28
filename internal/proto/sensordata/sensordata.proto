@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package sensordata;
+
+option go_package = "blink-yadp/internal/proto/sensordata;sensordata";
+
+import "google/protobuf/timestamp.proto";
+
+// Data sample for a single sensor
+message SensorData {
+    google.protobuf.Timestamp timestamp = 1;  // timestamp with sub-second precision
+    uint32 sensor_id = 2;
+    float value = 3;
+    string metadata = 4;
+}
+
+// A batch of sensor readings
+message SensorDataBatch {
+    repeated SensorData items = 1;
+}
+
+// Acknowledgement from the server to the client
+message Ack {
+    string message = 1;
+}
+
+// This service is implemented by the ingestor and called by the sensor(s)
+service SensorIngestor {
+    rpc SendSensorData (SensorData) returns (Ack);
+    rpc SendSensorBatch (SensorDataBatch) returns (Ack);
+    rpc SendSensorStream (stream SensorDataBatch) returns (Ack);
+}

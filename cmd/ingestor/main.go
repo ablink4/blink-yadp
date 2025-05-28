@@ -8,8 +8,10 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"blink-yadp/internal/ingest"
-	sensordata "blink-yadp/internal/proto"
+	ingest_fsmon "blink-yadp/internal/ingest/fsmon"
+	ingest_sensordata "blink-yadp/internal/ingest/sensordata"
+	"blink-yadp/internal/proto/fsmon"
+	sensordata "blink-yadp/internal/proto/sensordata"
 
 	"google.golang.org/grpc"
 )
@@ -24,7 +26,7 @@ func init() {
 func main() {
 	ctx := context.Background()
 
-	conn, err := ingest.NewClickHouseConn()
+	conn, err := ingest_sensordata.NewClickHouseConn()
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
@@ -35,8 +37,12 @@ func main() {
 	}
 	fmt.Println("Connected to ClickHouse.")
 
-	if err := ingest.EnsureTable(conn, ctx); err != nil {
-		log.Fatalf("EnsureTable failed: %v", err)
+	if err := ingest_sensordata.EnsureTable(conn, ctx); err != nil {
+		log.Fatalf("EnsureTable for SensorData failed: %v", err)
+	}
+
+	if err := ingest_fsmon.EnsureFsmonTable(conn, ctx); err != nil {
+		log.Fatalf("EnsureTable for FsMon failed: %v", err)
 	}
 
 	lis, err := net.Listen("tcp", ":50051")
@@ -46,7 +52,8 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	sensordata.RegisterSensorIngestorServer(grpcServer, &ingest.Server{DB: conn})
+	sensordata.RegisterSensorIngestorServer(grpcServer, &ingest_sensordata.Server{DB: conn})
+	fsmon.RegisterFsMonIngestorServer(grpcServer, &ingest_fsmon.Server{DB: conn})
 
 	fmt.Println("gRPC server listening on :50051")
 	if err := grpcServer.Serve(lis); err != nil {

@@ -6,7 +6,7 @@ import (
 	"log"
 	"runtime"
 
-	sensordata "blink-yadp/internal/proto"
+	sensordata "blink-yadp/internal/proto/sensordata"
 	"blink-yadp/internal/sensor"
 
 	"google.golang.org/grpc"

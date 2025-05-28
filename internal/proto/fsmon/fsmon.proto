@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package fsmon;
+
+option go_package = "blink-edr/internal/proto/fsmon;fsmon";
+
+import "google/protobuf/timestamp.proto";
+
+// FsMon is the data from a single fsmon event
+message FsMon {    
+    google.protobuf.Timestamp timestamp = 1;
+    string event_type = 2;
+    string name = 3;
+    int32 pid = 4;
+    string file = 5;
+    string cmd = 6;
+    string proc_name = 7;
+    string path = 8;
+    int32 ppid = 9;
+    int32 uid = 10;
+    int32 gid = 11;
+    repeated int32 groups = 12;
+    string cap_eff = 13;
+    string cap_prm = 14;
+    string cap_bnd = 15;
+    int32 seccomp = 16;
+    int32 no_new_privs = 17;
+    int32 threads = 18;
+    int32 vm_size = 19;
+    int32 vm_rss = 20;
+    int32 vm_data = 21;
+    int64 voluntary_ctx_switches = 22;
+    int64 nonvoluntary_ctx_switches = 23;
+    string computer_id = 24;
+}
+
+message FsMonBatch {
+    repeated FsMon items = 1;
+}
+
+message Ack {
+    string message = 1;
+}
+
+service FsMonIngestor {
+    rpc SendFsMon (FsMon) returns (Ack);
+    rpc SendFsMonBatch (FsMonBatch) returns (Ack);
+    rpc SendFsMonStream (stream FsMonBatch) returns (Ack);
+}

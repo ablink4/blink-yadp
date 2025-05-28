@@ -5,12 +5,12 @@ INGESTOR_BIN := $(BIN_DIR)/ingestor
 SENSOR_DIR := ./cmd/sensor
 INGESTOR_DIR := ./cmd/ingestor
 
-PROTO_DIR := ./internal/proto
-PROTO_FILES := $(wildcard $(PROTO_DIR)/*.proto)
+PROTO_BASE_DIR := ./internal/proto
+PROTO_FILES := $(shell find $(PROTO_BASE_DIR) -name "*.proto")
 
 GO_BUILD := go build
 
-.PHONY: build clean sensor ingestor proto generate
+.PHONY: build clean sensor ingestor proto generate all
 
 build: sensor ingestor
 
@@ -24,9 +24,12 @@ ingestor:
 
 proto:
 	@echo "Generating protobuf Go code..."
-	@protoc --go_out=. --go_opt=paths=source_relative \
-			--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-			$(PROTO_FILES)
+	@for file in $(PROTO_FILES); do \
+		protoc --proto_path=$(PROTO_BASE_DIR) \
+		       --go_out=$(PROTO_BASE_DIR) --go_opt=paths=source_relative \
+		       --go-grpc_out=$(PROTO_BASE_DIR) --go-grpc_opt=paths=source_relative \
+		       $$file; \
+	done
 
 # build protobuf and binaries together
 all: proto build
@@ -34,4 +37,4 @@ all: proto build
 clean:
 	@echo "Cleaning up binaries..."
 	@rm -rf $(BIN_DIR)
-	@find $(PROTO_DIR) -name "*.pb.go" -delete
+	@find $(PROTO_BASE_DIR) -name "*.pb.go" -delete
